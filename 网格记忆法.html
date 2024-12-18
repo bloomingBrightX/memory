@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网格记忆法网页</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #F0EAD6; /* 添加背景色 */
+    }
+  
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .container {
+      width: 80%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      height: 95%;
+    }
+  
+    #inputText {
+      height: 40px; /* 固定高度，例如3行 */
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 5px;
+      resize: none;
+      background-color: #F5F5DC;
+    }
+  
+    .buttons {
+      display: flex;
+      justify-content: space-evenly;
+      width: 105%;
+      margin-bottom: 5px;
+    }
+  
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius:3px;
+    }
+  
+    #outputText {
+      flex-grow: 1; /* 自动填充剩余空间 */
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      word-break: break-all;
+      border: 1px solid #ccc;
+      resize: none;
+      background-color: #F5F5DC;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <textarea id="inputText" placeholder="输入文本"></textarea>
+    <div class="buttons">
+      <button onclick="pasteFromClipboard()">粘贴剪切板</button>
+      <button onclick="clearInput()">清空输入框</button>
+      <button onclick="generateVersion1()">输出版本 1</button>
+      <button onclick="generateVersion2()">输出版本 2</button>
+      <button onclick="showOriginal()">显示原文</button>
+    </div>
+    <textarea id="outputText" readonly></textarea>
+  </div>
+
+  <script>
+    function pasteFromClipboard() {
+      navigator.clipboard.readText().then(text => {
+        document.getElementById('inputText').value = text;
+      });
+    }
+
+    function clearInput() {
+      document.getElementById('inputText').value = '';
+      document.getElementById('outputText').value = '';
+    }
+
+    function generateVersion1() {
+      const input = document.getElementById('inputText').value;
+      let output = '';
+      let words = input.split(' ');
+      let wordIndex = 0;
+
+      words.forEach(word => {
+        if (isChinese(word)) {
+          output += processChinese(word, true) + ' ';
+        } else {
+          if (wordIndex % 2 === 1) {
+            output += '_'.repeat(word.length) + ' ';
+          } else {
+            output += word + ' ';
+          }
+        }
+        wordIndex++;
+      });
+
+      document.getElementById('outputText').value = output.trim();
+    }
+
+    function generateVersion2() {
+      const input = document.getElementById('inputText').value;
+      let output = '';
+      let words = input.split(' ');
+      let wordIndex = 0;
+
+      words.forEach(word => {
+        if (isChinese(word)) {
+          output += processChinese(word, false) + ' ';
+        } else {
+          if (wordIndex % 2 === 0) {
+            output += '_'.repeat(word.length) + ' ';
+          } else {
+            output += word + ' ';
+          }
+        }
+        wordIndex++;
+      });
+
+      document.getElementById('outputText').value = output.trim();
+    }
+
+    function isChinese(str) {
+      return /[\u4e00-\u9fa5]/.test(str);
+    }
+
+    function processChinese(word, isVersion1) {
+      let result = '';
+      for (let i = 0; i < word.length; i++) {
+        if (isChinese(word[i])) {
+          if (isVersion1 && i % 2 === 1 || !isVersion1 && i % 2 === 0) {
+            result += '☐'; // 替换为方框
+          } else {
+            result += word[i];
+          }
+        } else {
+          result += word[i];
+        }
+      }
+      return result;
+    }
+
+    function showOriginal() {
+      document.getElementById('outputText').value = document.getElementById('inputText').value;
+    }
+  </script>
+</body>
+</html>
