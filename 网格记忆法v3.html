@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网格记忆法网页</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #121212; /* 初始为夜间模式背景色 */
+      word-wrap: break-word;
+      color: #D3D3D3; /* 浅灰色文字 */
+    }
+  
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  
+    .container {
+      width: 80%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      height: 95%;
+    }
+  
+    #inputText {
+      height: 40px; /* 固定高度，例如3行 */
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 5px;
+      resize: none;
+      background-color: #333; /* 初始为夜间模式背景色 */
+      color: #D3D3D3; /* 浅灰色文字 */
+    }
+  
+    #spaceIntervalLabel {
+      margin-right: 5px;
+      font-size: 14px;
+    }
+
+    #spaceInterval {
+      width: 50px;
+      padding: 5px;
+      font-size: 14px;
+      margin-bottom: 5px;
+      background-color: #333; /* 初始为夜间模式背景色 */
+      color: #D3D3D3; /* 浅灰色文字 */
+      border: 1px solid #ccc;
+      border-radius: 3px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-evenly;
+      width: 105%;
+      margin-bottom: 5px;
+    }
+  
+    button {
+      padding: 10px 20px;
+      background-color: #4caf4f65; /* 初始为夜间模式按钮颜色 */
+      color: rgb(210, 210, 210);
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 3px;
+    }
+  
+    #outputText {
+      flex-grow: 1; /* 自动填充剩余空间 */
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      word-break: break-all;
+      border: 1px solid #ccc;
+      resize: none;
+      background-color: #333; /* 初始为夜间模式背景色 */
+      color: #D3D3D3; /* 浅灰色文字 */
+    }
+
+    #themeToggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 10px;
+      background-color: rgba(255, 217, 0, 0.8); /* 金色 */
+      color: black;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      border-radius: 50%;
+    }
+
+    body.day-mode {
+      background-color: #F0EAD6; /* 白天模式背景色 */
+      color: #000000; /* 黑色文字 */
+    }
+
+    body.day-mode #inputText,
+    body.day-mode #spaceInterval,
+    body.day-mode #outputText {
+      background-color: #F5F5DC; /* 白天模式背景色 */
+      color: #000000; /* 黑色文字 */
+    }
+
+    body.day-mode button {
+      background-color: #4CAF50; /* 白天模式按钮颜色 */
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <button id="themeToggle" onclick="toggleTheme()">🌙</button>
+  <div class="container">
+    <textarea id="inputText" placeholder="输入文本"></textarea>
+    <div class="buttons">
+      <label id="spaceIntervalLabel" for="spaceInterval">挖空<br>间隔</label>
+      <input type="number" id="spaceInterval" value="1" min="1">
+      <button onclick="pasteFromClipboard()">粘贴剪切板</button>
+      <button onclick="clearInput()">清空输入框</button>
+      <button onclick="generateVersion1()">输出版本 1</button>
+      <button onclick="generateVersion2()">输出版本 2</button>
+      <button onclick="showOriginal()">显示原文</button>
+    </div>
+    <textarea id="outputText" readonly></textarea>
+  </div>
+
+  <script>
+    function pasteFromClipboard() {
+      navigator.clipboard.readText().then(text => {
+        document.getElementById('inputText').value = text;
+      });
+    }
+
+    function clearInput() {
+      document.getElementById('inputText').value = '';
+      document.getElementById('outputText').value = '';
+    }
+
+
+    function generateVersion1() {
+      const input = document.getElementById('inputText').value;
+      let output = '';
+      let words = input.split(' ');
+      let wordIndex = 0;
+      const spaceInterval = parseInt(document.getElementById('spaceInterval').value, 10);
+
+      words.forEach(word => {
+        if (isChinese(word)) {
+          output += processChinese(word, wordIndex) + '';
+        } else {
+          output += processEnglish(word, wordIndex)  + ' ';
+        }
+        wordIndex++;
+      });
+
+      document.getElementById('outputText').value = output.trim();
+    }
+    
+
+    function generateVersion2() {
+      const input = document.getElementById('inputText').value;
+      let output = '';
+      let words = input.split(' ');
+      const spaceInterval = parseInt(document.getElementById('spaceInterval').value, 10);
+      let wordIndex = spaceInterval;      
+
+      words.forEach(word => {
+        if (isChinese(word)) {
+          output += processChinese(word, wordIndex) + '';
+        } else {
+          output += processEnglish(word, wordIndex)  + ' ';
+        }
+        wordIndex++;
+      });
+
+      document.getElementById('outputText').value = output.trim();
+    }
+
+    function isChinese(str) {
+      return /[\u4e00-\u9fa5]/.test(str);
+    }
+
+    function isPunctuation(str) {
+    return /[\u2000-\u206F\u0020-\u002F\u003A-\u003F\u005B-\u0060\u007B-\u007E]/.test(str);
+    } //排除标点
+
+    function processChinese(word, wordIndex) {
+      let result = '';
+      const spaceInterval = parseInt(document.getElementById('spaceInterval').value, 10);
+      for (let i = 0; i < word.length; i++) { // 遍历串串里的每个汉字
+        if (isChinese(word[i])) { // 防止汉字夹杂英文符号，双保险
+          if ((i + wordIndex) % (spaceInterval*2) >= spaceInterval){//i是一个串串里的汉字序号，wordindex是串串序号，添在中文处理函数主要用于区分版本，因为输出版本12的初始值不同
+          // if ((i + wordIndex) % 2 === 0) { //只能处理挖空间隔1
+            result += '☐'; // 替换为方框
+          } else {
+            result += word[i];
+          }
+        } else {
+          result += word[i]; // 处理非汉字字符
+        }
+      }
+      return result;
+    }
+
+    /*function processEnglish(word, wordIndex)  {
+      if  (wordIndex % 2 === 0) {
+        return '_'.repeat(word.length);
+      } else {
+        return word;
+      } 
+    }*///代码简洁，但处理不了标点
+    
+    function processEnglish(word, wordIndex) {
+      let result = '';
+      const spaceInterval = parseInt(document.getElementById('spaceInterval').value, 10);
+      for (let i = 0; i < word.length; i++) { // 遍历串串里的每个字符
+        if (!isPunctuation(word[i])) { // 排除标点，标点保持原样
+          if ((wordIndex) % (spaceInterval*2) >= spaceInterval){//区分版本
+          //if (wordIndex % 2 === 0) {//只能处理挖空间隔1
+            result += '_'; // 替换为方框
+          } else {
+            result += word[i];
+          }
+        } else {
+          result += word[i]; // 处理标点符号，保持原样
+        }
+      }
+      return result;
+    }
+  
+
+    function showOriginal() {
+      document.getElementById('outputText').value = document.getElementById('inputText').value;
+    }
+
+    function toggleTheme() {
+      const body = document.body;
+      const themeToggle = document.getElementById('themeToggle');
+
+      if (body.classList.contains('day-mode')) {
+        body.classList.remove('day-mode');
+        themeToggle.textContent = '🌙'; // 月亮图标
+      } else {
+        body.classList.add('day-mode');
+        themeToggle.textContent = '☀️'; // 太阳图标
+      }
+    }
+
+    function initTheme() {
+      const currentHour = new Date().getHours();
+      const body = document.body;
+      const themeToggle = document.getElementById('themeToggle');
+
+      if (currentHour >= 12 && currentHour < 22) {
+        // 白天模式
+        body.classList.add('day-mode');
+        themeToggle.textContent = '☀️'; // 太阳图标
+      } else {
+        // 夜间模式
+        body.classList.remove('day-mode');
+        themeToggle.textContent = '🌙'; // 月亮图标
+      }
+    }
+
+    // 页面加载完成后调用初始化函数
+    window.onload = initTheme;
+  </script>
+</body>
+</html>
